@@ -21,6 +21,8 @@ export interface SafeOperation {
   onStart?: () => void;
   /** Runs when the task fails (set local error state here). Receives the message. */
   onError?: (message: string) => void;
+  /** Optional predicate to check if the caller component is still mounted. */
+  isMounted?: () => boolean;
 }
 
 // Errors this module has already reported and re-thrown to a caller. Lets the provider
@@ -30,6 +32,13 @@ const rethrown = new WeakSet<object>();
 /** True if `reason` is an error a Dorisio hook reported and re-threw to its caller. */
 export function isRethrownByHook(reason: unknown): boolean {
   return typeof reason === 'object' && reason !== null && rethrown.has(reason);
+}
+
+/** True when `reason` is an abort-shaped error (caller cancelled the request). */
+export function isAbortError(reason: unknown): boolean {
+  if (!reason || typeof reason !== 'object') return false;
+  const name = (reason as { name?: unknown }).name;
+  return name === 'AbortError' || name === 'CanceledError';
 }
 
 /** Extract a human-readable message from anything that can be thrown. */
@@ -53,7 +62,12 @@ export function safely(label: string, fn: () => void): void {
 
 /** Attach a logging handler to a fire-and-forget promise so it can't go unhandled. */
 export function logRejection(promise: Promise<unknown>, label: string): void {
-  promise.catch((err) => console.error(`[dorisio] ${label} failed:`, err));
+  promise.catch((err) => {
+    // Aborting an in-flight request is expected (unmount / superseded fetch)
+    // and must not surface as an error log.
+    if (isAbortError(err)) return;
+    console.error(`[dorisio] ${label} failed:`, err);
+  });
 }
 
 /**
@@ -68,6 +82,7 @@ export function logRejection(promise: Promise<unknown>, label: string): void {
  *     fallbackMessage: 'Failed to create tip',
  *     onStart: () => setState((s) => ({ ...s, loading: true, error: undefined })),
  *     onError: (error) => setState((s) => ({ ...s, error, loading: false })),
+ *     isMounted: () => isMountedRef.current,
  *   },
  *   async () => client.createTip(data)
  * );
@@ -83,9 +98,12 @@ export async function runSafely<T>(
     op.onStart?.();
     return await task();
   } catch (err) {
-    const message = getErrorMessage(err, op.fallbackMessage);
-    safely('onError', () => op.onError?.(message));
-    safely('setError', () => setError({ message, code: op.code }));
+    const isStillMounted = op.isMounted ? op.isMounted() : true;
+    if (isStillMounted) {
+      const message = getErrorMessage(err, op.fallbackMessage);
+      safely('onError', () => op.onError?.(message));
+      safely('setError', () => setError({ message, code: op.code }));
+    }
     if (typeof err === 'object' && err !== null) rethrown.add(err);
     throw err;
   } finally {

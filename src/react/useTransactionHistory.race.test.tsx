@@ -89,6 +89,29 @@ afterEach(() => {
 });
 
 describe('useTransactionHistory race guard (#26)', () => {
+  it('does not refetch continuously when auto-fetch receives a fresh options object', async () => {
+    const { client, calls } = makeClient(false);
+    let renderCount = 0;
+    const { result } = renderHook(() => {
+      renderCount += 1;
+      return useTransactionHistory({ page: 1, pageSize: 10 }, true);
+    }, {
+      wrapper: wrapperFor(client),
+    });
+
+    expect(calls).toHaveLength(1);
+    const initialCall = calls.at(0);
+    if (!initialCall) throw new Error('Expected the auto-fetch request');
+    await act(async () => {
+      initialCall.deferred.resolve(pageData(10, 'initial'));
+      await Promise.resolve();
+    });
+
+    expect(result.current.transactions[0]?.id).toBe('tx-initial');
+    expect(calls).toHaveLength(1);
+    expect(renderCount).toBeLessThan(5);
+  });
+
   it('uses the latest response when two fetches resolve out of order', async () => {
     // No auto-abort here so the stale request can resolve late like a slow
     // server beating a fast one — the generation guard must still ignore it.
@@ -149,6 +172,29 @@ describe('useTransactionHistory race guard (#26)', () => {
     });
     expect(result.current.pageSize).toBe(20);
     expect(result.current.error).toBeUndefined();
+  });
+
+  it('aborts the in-flight auto-fetch request when the options change', async () => {
+    const { client, calls } = makeClient(true);
+    const { rerender } = renderHook(
+      ({ pageSize }: { pageSize: number }) => useTransactionHistory({ page: 1, pageSize }, true),
+      { initialProps: { pageSize: 10 }, wrapper: wrapperFor(client) }
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.signal?.aborted).toBe(false);
+
+    rerender({ pageSize: 20 });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(calls).toHaveLength(2);
+    expect(calls[0]?.signal?.aborted).toBe(true);
+    expect(calls[1]?.signal?.aborted).toBe(false);
   });
 
   it('collapses rapid setPageSize calls into one fetch for the latest size', async () => {

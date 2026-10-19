@@ -5,37 +5,251 @@
  * Provides type-safe API client and utilities for integrating Dorisio payments.
  */
 
+// Re-export DNS failover utilities
+export {
+  DnsFailoverManager,
+  DnsFailoverError,
+  isDnsError,
+  isTransientNetworkError,
+  DEFAULT_DNS_CACHE_TTL_MS,
+  type DnsFailoverOptions,
+  type DnsResolveResult,
+} from './http/dns-failover';
+
 export const SDK_VERSION = '0.1.0';
 
 // Re-export client and utilities
 export { DorisioClient, type ClientConfig } from './client';
+export type { CompressionAlgorithm, RequestCompressionConfig } from './http/compress';
+
+// Re-export GraphQL client and queries
+export {
+  GraphQLClient,
+  GraphQLCache,
+  GraphQLError,
+  type GraphQLClientConfig,
+  type GraphQLRequestOptions,
+  type GraphQLResponse,
+  type GraphQLErrorItem,
+  type GraphQLerrorLocation,
+  type GraphQLCacheOptions,
+  type CacheEntry,
+} from './graphql/graphql-client';
+export {
+  GET_CREATOR,
+  GET_CREATOR_WITH_USER,
+  LIST_CREATORS,
+  GET_CREATOR_PROFILE,
+  GET_TRANSACTION,
+  GET_TRANSACTION_WITH_DETAILS,
+  GET_TRANSACTION_HISTORY,
+  GET_WALLET,
+  GET_WALLETS,
+  CREATE_TIP,
+  buildCreatorQuery,
+  buildListCreatorsQuery,
+  buildTransactionQuery,
+  buildTransactionHistoryQuery,
+  buildCustomQuery,
+} from './graphql/queries';
 
 // Re-export HTTP interceptors (public API for custom middleware)
+export {
+  ApiVersionHandler,
+  type ApiVersionHandlerOptions,
+  type DeprecationWarning,
+  type DeprecatedEndpointConfig,
+  type RequestMigrationContext,
+  type VersionMigration,
+} from './http/api-version-handler';
 export { InterceptorManager } from './http/interceptors';
 export type {
+  InterceptorId,
   RequestInterceptor,
   ResponseInterceptor,
   ErrorInterceptor,
-} from './http/interceptors';
-export type { RequestOptions } from './http/http-client';
+} from './types/interceptors';
+export type { RequestOptions, HttpClientOptions, HttpClientMode } from './http/http-client';
+export { HttpClient } from './http/http-client';
+export { validateSchema } from './validation/schema-validator';
+export { SchemaValidationError } from './types/validation';
+export type {
+  ValidationSchema,
+  ValidationSchemas,
+  SchemaValidationIssue,
+} from './types/validation';
+export { CacheManager } from './cache/cache-manager';
+export type { CacheOptions, CacheStats, CacheStrategy } from './types/cache';
+export { Http2PushManager } from './http/http2-push';
+export type { Http2PushConfig, PushedResourceEntry } from './http/http2-push';
+export { RequestQueue, type RequestQueueOptions } from './http/request-queue';
+export { PriorityRequestQueue, type PriorityRequestQueueOptions } from './queue/request-queue';
+export type { QueueConfig, QueueStats, RequestPriority } from './types/queue';
+export { Batcher, type BatchExecuteOptions, type BatchOperationResult } from './utils/batch';
+export { RequestSigner, type RequestSignerOptions } from './http/request-signer';
+export {
+  ConnectionPool,
+  type ConnectionPoolOptions,
+  type ConnectionPoolStats,
+} from './http/connection-pool';
+export {
+  SocketManager,
+  type SocketManagerOptions,
+  type SocketManagerStats,
+  type SocketEntry,
+  type SocketState,
+  type SocketLike,
+} from './http/socket-manager';
+export {
+  OfflineQueue,
+  type OfflineQueueOptions,
+  type OfflineEventType,
+  type OfflineEventListener,
+  type QueueProcessedResult,
+} from './http/offline-queue';
 
+// Re-export offline-first storage and sync (Issue #129)
+export { OfflineManager } from './offline/sync';
+export { MemoryStorage, IndexedDBStorage, createStorageBackend } from './offline/storage';
+export type {
+  OfflineConfig,
+  StorageBackendType,
+  QueuedOperation,
+  OperationStatus,
+  OperationType,
+  SyncState,
+  SyncResult,
+  SyncConflict,
+  OfflineSyncEventType,
+  OfflineSyncEventListener,
+  SyncOptions,
+  StorageStats,
+  ConflictResolutionStrategy,
+  IStorageBackend,
+  OperationFilter,
+  OperationMetadata,
+  SyncEventData,
+  StorageBackendOptions,
+} from './types/offline';
+export {
+  FailoverManager,
+  type EndpointConfig,
+  type FailoverManagerOptions,
+} from './http/failover-manager';
+export { JsonSerializer, type Serializer } from './http/serializer';
+export {
+  MetricsCollector,
+  type MetricsCollectorOptions,
+  type MetricsSummary,
+  type PerformanceMetrics,
+  type MemoryUsage,
+  type MonitoringConfig,
+  type MethodStat,
+  type MetricRecord,
+  type CallbackMetrics,
+  type MetricsCallback,
+} from './lib/metrics';
+
+// Re-export error reporter
+export {
+  ConsoleErrorReporter,
+  NoopErrorReporter,
+  createErrorReporter,
+  type ErrorReporter,
+  type ErrorReporterOptions,
+  type ErrorReportEvent,
+  type UserContext,
+} from './lib/error-reporter';
+
+// Re-export hook system
+export {
+  HookManager,
+  type HookContext,
+  type ResponseContext,
+  type BeforeRequestHook,
+  type AfterRequestHook,
+  type BeforeResponseHook,
+  type AfterResponseHook,
+  type HookRegistration,
+} from './lib/hooks';
+
+// Re-export throttle manager
+export {
+  ThrottleManager,
+  type ThrottleManagerOptions,
+  type EndpointThrottleConfig,
+} from './http/throttle-manager';
+
+// Re-export proxy config type
+export type { ProxyConfig } from './http/http-client';
+
+// Re-export Sentry integration
+export {
+  SentryErrorReporter,
+  HttpSentryTransport,
+  createSentryReporter,
+  type SentryTransport,
+  type SentryEvent,
+} from './integrations/sentry';
+
+// Re-export circuit breaker
+export {
+  CircuitBreaker,
+  CircuitOpenError,
+  type CircuitBreakerOptions,
+  type CircuitState,
+  type CircuitBreakerStats,
+} from './http/circuit-breaker';
+
+// Re-export real-time sync (Issue #58)
+export {
+  WebSocketClient,
+  ALL_CHANNELS,
+  type WebSocketClientOptions,
+  type WebSocketState,
+  type WebSocketLike,
+  type WebSocketFactory,
+  type RealtimeEvent,
+  type RealtimeListener,
+  type RealtimeFrame,
+  type RealtimeSource,
+  type RealtimeStateListener,
+  type PollingFallbackOptions,
+} from './websocket/websocket-client';
 
 // Re-export types
 export type { ApiResponse, PaginationMeta, PaginatedResponse } from './types/api';
+
+// Re-export error classes and typed error handling primitives
 export {
-  ApiError,
-  ValidationError,
-  AuthenticationError,
-  AuthorizationError,
-  NotFoundError,
-  NetworkError,
-  TimeoutError,
+  // Base error class -- all SDK errors inherit from this.
   DorisioError,
+  // Domain error classes from src/types/errors.ts
   AuthError,
   WalletVerificationError,
   PaymentError,
+  ValidationError,
   RateLimitError,
+  QueueFullError,
 } from './types/errors';
+export type {
+  ErrorHandler,
+  ErrorHandlerAction,
+  ErrorHandlerContext,
+  Middleware,
+  MiddlewareContext,
+} from './types/errors';
+export { isRetryableError } from './lib/errors/utils';
+
+// Re-export HTTP error factory (HTTP status -> error class mapping)
+export {
+  ApiErrorFactory,
+  type ErrorResponse,
+} from './http/error-factory';
+
+// Re-export error handler utilities
+export { ApiErrorHandler } from './utils/error-handler';
+export { ApiError } from './types/errors';
 
 // Re-export domain models
 export type {
@@ -59,10 +273,42 @@ export type {
   CreatorEarningsResponse,
   TipRequest,
   CreateTipRequest,
+  Tip,
 } from './types';
 
 // Re-export utils
 export { ApiErrorHandler, RequestValidator } from './utils';
+export {
+  isAuthError,
+  isPaymentError,
+  isValidationError,
+  isRateLimitError,
+  isNetworkError,
+} from './lib/errors/type-guards';
+
+// Re-export idempotency manager
+export {
+  IdempotencyManager,
+  getIdempotencyManager,
+  type IdempotencyManagerOptions,
+  type IdempotencyRecord,
+} from './utils/idempotency-manager';
+
+// Re-export idempotency manager
+export {
+  IdempotencyManager,
+  getIdempotencyManager,
+  type IdempotencyManagerOptions,
+  type IdempotencyRecord,
+} from './utils/idempotency-manager';
+
+// Re-export request fingerprinting (duplicate detection)
+export {
+  generateFingerprint,
+  RequestFingerprinter,
+  type FingerprinterOptions,
+  type FingerprintCacheEntry,
+} from './http/fingerprinter';
 
 // Re-export webhook utilities
 export {
@@ -149,9 +395,14 @@ export {
   listCreatorTips,
   listVerifiedCreators,
   createPaginator,
+  encodeCursor,
+  decodeCursor,
   Paginator,
   type QueryOptions,
   type PaginationResult,
+  type PageFetcher,
+  type PageItem,
+  type ListClient,
 } from './lib/query-builder';
 
 // Re-export mappers
@@ -196,6 +447,36 @@ export {
   getCreators,
   getAllTransactionHistory,
   getAllWalletBalances,
+  getCreatorsBatch,
+  getWalletBalancesBatch,
+  createTipsBatch,
+  processBatchWithRetry,
+  retryBatch,
 } from './client/batch-operations';
 export type { VerificationStatus } from './client/verification';
 export type { SessionInfo } from './client/auth';
+
+// Re-export plugin system (Issue #137)
+export {
+  PluginSystem,
+  PluginHook,
+  createPlugin,
+  composePlugins,
+  type Plugin,
+  type PluginHookContext,
+  type PluginHookHandler,
+  type InstalledPlugin,
+  type PluginCompositionResult,
+  type PluginStatEntry,
+} from './lib/plugin-system';
+
+// Re-export batch processor (Issue #140)
+export {
+  BatchProcessor,
+  createBatchProcessor,
+  type BatchProcessorOptions,
+  type BatchRequest,
+  type BatchResult,
+  type BatchItemResult,
+  type BatchSummary,
+} from './http/batch-processor';
