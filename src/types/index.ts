@@ -26,8 +26,23 @@ export type {
   CreatorEarningsResponse,
 } from './models';
 
+import type { Transaction as TransactionModel } from './models';
+
+/** A tip is a transaction. */
+export type Tip = TransactionModel;
+
+export type {
+  Paginator,
+  PageFetcher,
+  PageItem,
+  PaginationResult,
+  QueryOptions,
+} from '../lib/query-builder';
+
 export type { TipRequest, CreateTipRequest } from './requests';
+export type { CacheOptions, CacheStats, CacheStrategy } from './cache';
 export type { ApiResponse, PaginationMeta, PaginatedResponse } from './api';
+export type { QueueConfig, QueueStats, RequestPriority } from './queue';
 export {
   DorisioError,
   AuthError,
@@ -35,13 +50,70 @@ export {
   PaymentError,
   ValidationError,
   RateLimitError,
-  TimeoutError,
-  ApiError,
-  AuthenticationError,
-  AuthorizationError,
-  NotFoundError,
-  NetworkError,
+  QueueFullError,
 } from './errors';
+export type {
+  DorisioErrorOptions,
+  AuthErrorOptions,
+  WalletVerificationErrorOptions,
+  PaymentErrorOptions,
+  ValidationErrorOptions,
+  RateLimitErrorOptions,
+  QueueFullErrorOptions,
+} from './errors';
+export {
+  createError,
+  createAuthError,
+  createWalletVerificationError,
+  createPaymentError,
+  createValidationError,
+  createRateLimitError,
+  createQueueFullError,
+} from '../http/error-factory';
+export type {
+  ErrorHandler,
+  ErrorHandlerAction,
+  ErrorHandlerContext,
+  RateLimitMetadata,
+  Middleware,
+  MiddlewareContext,
+} from './errors';
+export { ApiError } from './errors';
+
+export type {
+  BatchResult,
+  BatchSuccess,
+  BatchFailure,
+  BatchProcessorOptions,
+} from '../http/batch-processor';
+export { BatchProcessor, processBatch, retryBatchFailures } from '../http/batch-processor';
+
+export type {
+  LogLevel,
+  LogEntry,
+  LogHandler,
+  LoggerOptions,
+} from '../lib/logger';
+export { Logger, createLogger } from '../lib/logger';
+
+// Offline-first storage and sync exports
+export type {
+  OfflineConfig,
+  StorageBackendType,
+  QueuedOperation,
+  OperationStatus,
+  OperationType,
+  SyncState,
+  SyncResult,
+  SyncConflict,
+  OfflineSyncEventType,
+  OfflineSyncEventListener,
+  SyncOptions,
+  StorageStats,
+  ConflictResolutionStrategy,
+  IStorageBackend,
+  OperationFilter,
+} from './offline';
 
 // Schema exports for consumer validation
 export {
